@@ -17,88 +17,123 @@ let pedidosNuvem = [];
 let cardapioNuvem = [];
 let primeiraCargaPedidos = true; 
 
-// ================= OLHEIROS DA NUVEM =================
-db.collection("pedidos").onSnapshot((snapshot) => {
-    pedidosNuvem = [];
-    let temPedidoNovo = false;
+// ================= OLHEIROS DA NUVEM (AGORA PROTEGIDOS) =================
+function iniciarOlheiros() {
+    db.collection("pedidos").onSnapshot((snapshot) => {
+        pedidosNuvem = [];
+        let temPedidoNovo = false;
 
-    snapshot.forEach((doc) => {
-        let pedido = doc.data();
-        pedido.firebaseId = doc.id; 
-        pedidosNuvem.push(pedido);
+        snapshot.forEach((doc) => {
+            let pedido = doc.data();
+            pedido.firebaseId = doc.id; 
+            pedidosNuvem.push(pedido);
+        });
+
+        snapshot.docChanges().forEach((change) => {
+            if (change.type === "added") temPedidoNovo = true;
+        });
+
+        if (!primeiraCargaPedidos && temPedidoNovo) {
+            const audio = document.getElementById('som-notificacao');
+            if (audio) audio.play().catch(e => console.warn("Áudio bloqueado pelo navegador. Clique na tela para liberar."));
+        }
+
+        primeiraCargaPedidos = false;
+        pedidosNuvem.sort((a, b) => new Date(b.data) - new Date(a.data));
+        if (!adminView.classList.contains('hidden')) carregarTudo();
+    }, (error) => console.error("Erro no olheiro de pedidos:", error));
+
+    db.collection("cardapio").onSnapshot((snapshot) => {
+        cardapioNuvem = [];
+        snapshot.forEach((doc) => {
+            let item = doc.data(); item.id = doc.id; cardapioNuvem.push(item);
+        });
+        if (!adminView.classList.contains('hidden')) carregarTudo();
     });
 
-    snapshot.docChanges().forEach((change) => {
-        if (change.type === "added") temPedidoNovo = true;
-    });
-
-    if (!primeiraCargaPedidos && temPedidoNovo) {
-        const audio = document.getElementById('som-notificacao');
-        if (audio) audio.play().catch(e => console.log("Áudio bloqueado."));
-    }
-
-    primeiraCargaPedidos = false;
-    pedidosNuvem.sort((a, b) => new Date(b.data) - new Date(a.data));
-    if (!adminView.classList.contains('hidden')) carregarTudo();
-});
-
-db.collection("cardapio").onSnapshot((snapshot) => {
-    cardapioNuvem = [];
-    snapshot.forEach((doc) => {
-        let item = doc.data();
-        item.id = doc.id; 
-        cardapioNuvem.push(item);
-    });
-    if (!adminView.classList.contains('hidden')) carregarTudo();
-});
-
-db.collection("config").doc("loja").onSnapshot((doc) => {
-    if (doc.exists) {
-        const configLoja = doc.data();
-        if(document.getElementById('cloud-endereco')) {
-            document.getElementById('cloud-endereco').innerText = configLoja.endereco || "Não definido";
-            document.getElementById('cloud-raio').innerText = configLoja.raio || "0";
-            document.getElementById('cloud-taxa').innerText = configLoja.taxa ? parseFloat(configLoja.taxa).toFixed(2).replace('.', ',') : "0,00";
-            document.getElementById('config-limite-gratis').value = configLoja.limiteGratis || 4;
-            
-            const badge = document.getElementById('nuvem-status');
-            if(badge) {
-                badge.innerHTML = '🟢 Sincronizado';
-                badge.style.background = '#d4edda';
-                badge.style.color = '#155724';
+    db.collection("config").doc("loja").onSnapshot((doc) => {
+        if (doc.exists) {
+            const configLoja = doc.data();
+            if(document.getElementById('cloud-endereco')) {
+                document.getElementById('cloud-endereco').innerText = configLoja.endereco || "Não definido";
+                document.getElementById('cloud-raio').innerText = configLoja.raio || "0";
+                document.getElementById('cloud-taxa').innerText = configLoja.taxa ? parseFloat(configLoja.taxa).toFixed(2).replace('.', ',') : "0,00";
+                document.getElementById('config-limite-gratis').value = configLoja.limiteGratis || 4;
+                
+                const badge = document.getElementById('nuvem-status');
+                if(badge) {
+                    badge.innerHTML = '🟢 Sincronizado';
+                    badge.style.background = '#d4edda';
+                    badge.style.color = '#155724';
+                }
             }
         }
+    });
+}
+
+// ================= VERIFICAÇÃO AUTOMÁTICA DE LOGIN =================
+firebase.auth().onAuthStateChanged((user) => {
+    if (user) {
+        // Se o Firebase confirmar que o usuário tem o crachá, libera a tela e inicia as buscas
+        loginView.classList.add('hidden'); 
+        adminView.classList.remove('hidden'); 
+        iniciarOlheiros(); 
+    } else {
+        adminView.classList.add('hidden'); 
+        loginView.classList.remove('hidden'); 
     }
 });
-
-window.addEventListener('focus', () => { if (!adminView.classList.contains('hidden')) carregarTudo(); });
-
 
 // ================= LOGIN & NAVEGAÇÃO =================
 function fazerLogin() {
-    const email = document.getElementById('username').value; // Agora o admin digitará o e-mail aqui
+    const email = document.getElementById('username').value; 
     const pass = document.getElementById('password').value;
 
     if (!email || !pass) return alert("Preencha e-mail e senha.");
 
-    // O Firebase verifica direto no servidor do Google se a senha bate
+    let btn = document.querySelector('.login-box .btn');
+    if(btn) btn.innerHTML = "<i class='fas fa-spinner fa-spin'></i> Entrando...";
+
     firebase.auth().signInWithEmailAndPassword(email, pass)
-        .then((userCredential) => {
-            loginView.classList.add('hidden'); 
-            adminView.classList.remove('hidden'); 
-            carregarTudo();
-        })
         .catch((error) => {
             alert('Acesso negado: E-mail ou senha incorretos.');
-            console.error(error);
+            if(btn) btn.innerHTML = "Entrar no Painel";
         });
 }
 
 function sair() { 
-    firebase.auth().signOut().then(() => {
-        adminView.classList.add('hidden'); 
-        loginView.classList.remove('hidden'); 
-    });
+    firebase.auth().signOut(); 
+}
+
+// ================= MODAL COMANDA VIRTUAL =================
+function abrirModalDetalhes(firebaseId) {
+    let pedido = pedidosNuvem.find(p => p.firebaseId === firebaseId);
+    if (!pedido) return;
+
+    document.getElementById('detalhe-id').innerText = `Pedido #${pedido.id}`;
+    
+    let pagamentoBadge = pedido.pagamento ? `<span style="color:#28a745; font-weight:bold;">${pedido.pagamento}</span>` : "";
+    document.getElementById('detalhe-cliente').innerHTML = `
+        <strong>${pedido.tipoEntrega === 'entrega' ? '🛵 Delivery' : '🏪 Retirada (Balcão)'}</strong><br>
+        ${pedido.enderecoCliente}<br>
+        ${pedido.telefoneCliente !== 'Não informado' ? `Whats: ${pedido.telefoneCliente}` : ''}<br>
+        <div style="margin-top: 5px;">${pagamentoBadge}</div>
+    `;
+
+    // Monta a lista de ingredientes bem grande e legível
+    let itensHtml = pedido.itens.map(i => `
+        <div style="margin-bottom: 15px; border-bottom: 1px dashed #ccc; padding-bottom: 10px;">
+            <strong style="font-size: 18px; color: var(--purple-dark); display: block; margin-bottom: 5px;">${i.nome}</strong>
+            <span style="font-size: 16px; color: #222; line-height: 1.5;">${i.detalhes}</span>
+        </div>
+    `).join('');
+
+    document.getElementById('detalhe-itens').innerHTML = itensHtml;
+    document.getElementById('modal-detalhes-pedido').classList.remove('modal-oculto');
+}
+
+function fecharModalDetalhes() {
+    document.getElementById('modal-detalhes-pedido').classList.add('modal-oculto');
 }
 
 function navegarAba(secao, elementoClicado) {
@@ -143,7 +178,15 @@ function carregarTudo() {
     if(tbEspera) {
         tbEspera.innerHTML = '';
         pedidosAtivos.forEach(p => {
-            let htmlDetalhes = p.itens && p.itens.length > 0 ? `<ul class="detalhes-pedido">${p.itens.map(i => `<li><b>${i.nome}</b> <i>${i.detalhes}</i></li>`).join('')}</ul>` : p.itensResumo;
+            // Novo visual do item e do botão de comanda
+            let htmlDetalhes = `
+                <div style="font-weight: 700; color: #2d3748; font-size: 13px; margin-bottom: 10px;">
+                    ${p.itensResumo}
+                </div>
+                <button style="background: #ffffff; color: var(--purple-dark); border: 1.5px solid var(--purple-dark); padding: 6px 14px; border-radius: 50px; cursor: pointer; font-size: 12px; font-weight: 700; display: inline-flex; align-items: center; gap: 6px; box-shadow: 0 2px 5px rgba(0,0,0,0.05);" onclick="abrirModalDetalhes('${p.firebaseId}')">
+                    <i class="fas fa-receipt"></i> Ver Comanda
+                </button>
+            `;
             let pagamentoBadge = p.pagamento ? `<br><span style="color:#28a745; font-weight:bold;">${p.pagamento}</span>` : "";
             let tipoPedidoBadge = p.tipoEntrega === 'entrega' 
                 ? `<span style="background:var(--purple-light); color:white; padding:3px 6px; border-radius:4px; font-size:11px;">🛵 Delivery</span><br><small style="color:#555;">${p.enderecoCliente}<br>Whats: ${p.telefoneCliente}</small>${pagamentoBadge}` 
@@ -348,5 +391,3 @@ function resetarSistema() {
         });
     }
 }
-
-

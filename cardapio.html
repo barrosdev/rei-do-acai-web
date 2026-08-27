@@ -11,7 +11,10 @@
 <body>
 
     <header class="header">
-        <div class="logo-area">👑 Rei do Açaí</div>
+        <!-- Canto esquerdo do cabeçalho -->
+        <a href="index.html" style="text-decoration: none; color: inherit;">
+            <h2>👑 Rei do Açaí</h2>
+        </a>
         <div class="nav-area">
             <button class="nav-btn" onclick="mostrarSecao('inicio')">🏠 Início</button>
             <button class="nav-btn btn-carrinho" onclick="mostrarSecao('carrinho')">
@@ -39,6 +42,13 @@
                 <h2 id="custom-title" style="margin: 15px 0 5px 0; color: var(--purple-dark);">Nome</h2>
                 <p id="custom-price" style="font-size: 18px; font-weight: bold; color: var(--green-primary); margin-bottom: 20px;">R$ 0,00</p>
                 <div id="opcoes-dinamicas"></div>
+                
+                <!-- CAIXA DE OBSERVAÇÃO -->
+                <div style="margin-top: 15px;">
+                    <h3 style="font-size:15px; margin-bottom:10px; color: var(--purple-dark);">Observações (Opcional)</h3>
+                    <textarea id="obs-produto" class="input-modern" placeholder="Ex: Leite em pó só por cima, sem banana..." style="width: 100%; height: 60px; resize: none; padding: 10px;"></textarea>
+                </div>
+                
                 <button id="btn-adicionar-produto" class="btn-action" style="margin-top: 20px; font-size: 16px; padding: 15px;" onclick="adicionarAoCarrinho()">Adicionar ao Carrinho ➔</button>
             </div>
         </section>
@@ -73,8 +83,10 @@
                         
                         <label style="font-size: 13px; font-weight: bold; color: #555; display:block; margin-bottom: 5px;">Número / Complemento:</label>
                         <input type="text" id="numero-cliente" class="input-modern" placeholder="Ex: 1000, Apto 201" style="margin-bottom: 15px;">
+                        
                         <label style="font-size: 13px; font-weight: bold; color: #555; display:block; margin-bottom: 5px; margin-top: 15px;">Seu WhatsApp (Com DDD):</label>
-<input type="text" id="whatsapp-cliente" class="input-modern" placeholder="Ex: 32 99999-9999" style="margin-bottom: 15px;">
+                        <input type="text" id="whatsapp-cliente" class="input-modern" placeholder="Ex: 32 99999-9999" style="margin-bottom: 15px;">
+                        
                         <button class="btn-action" style="background: var(--purple-light); color: var(--purple-dark); border: none; width: 100%; padding: 14px;" onclick="calcularFreteReal()">Calcular Rota e Taxa</button>
                         <div id="msg-frete" style="margin-top: 15px; font-weight: 500; text-align: center; font-size: 14px;"></div>
                     </div>
@@ -97,6 +109,28 @@
                                 <i class="fas fa-money-bill-wave" style="color: #4caf50;"></i>
                                 <span>Na Entrega<br><small style="color:#888; font-weight: normal;">Dinheiro/Máquina</small></span>
                             </label>
+                        </div>
+
+                        <!-- CÓDIGO NOVO: SUB-CAIXINHA DE PAGAMENTO NA ENTREGA -->
+                        <div id="form-na-entrega-container" style="margin-bottom: 25px; background: #fff; padding: 20px; border-radius: 12px; border: 1px solid #eee;">
+                            <p style="margin-bottom: 15px; font-size: 14px; color: #555; font-weight: 600;">Como você vai pagar na entrega?</p>
+                            
+                            <div style="display: flex; gap: 10px; margin-bottom: 15px;">
+                                <label style="flex: 1; border: 1px solid #ccc; padding: 10px; border-radius: 8px; text-align: center; cursor: pointer; font-size: 13px;">
+                                    <input type="radio" name="sub_pagamento_entrega" value="Debito" checked onclick="toggleTroco()"> Débito
+                                </label>
+                                <label style="flex: 1; border: 1px solid #ccc; padding: 10px; border-radius: 8px; text-align: center; cursor: pointer; font-size: 13px;">
+                                    <input type="radio" name="sub_pagamento_entrega" value="Credito" onclick="toggleTroco()"> Crédito
+                                </label>
+                                <label style="flex: 1; border: 1px solid #ccc; padding: 10px; border-radius: 8px; text-align: center; cursor: pointer; font-size: 13px;">
+                                    <input type="radio" name="sub_pagamento_entrega" value="Dinheiro" onclick="toggleTroco()"> Dinheiro
+                                </label>
+                            </div>
+                            
+                            <div id="box-troco" class="hidden">
+                                <label style="font-size: 13px; font-weight: bold; color: #555; display:block; margin-bottom: 5px;">Troco para quanto?</label>
+                                <input type="text" id="valor-troco" class="input-modern" placeholder="Ex: 50,00 (Deixe em branco se não precisar)">
+                            </div>
                         </div>
 
                         <div id="form-pix-container" class="hidden" style="margin-bottom: 25px; background: #fff; padding: 20px; border-radius: 12px; border: 1px solid #eee;">

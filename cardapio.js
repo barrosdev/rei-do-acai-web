@@ -107,7 +107,10 @@ function iniciarPersonalizacao(idProduto) {
 
     document.getElementById('custom-title').innerText = produtoSendoPersonalizado.nome;
     document.getElementById('custom-price').innerText = `R$ ${produtoSendoPersonalizado.preco.toFixed(2).replace('.', ',')}`;
-    const divOpcoes = document.getElementById('opcoes-dinamicas'); divOpcoes.innerHTML = ''; 
+    const divOpcoes = document.getElementById('opcoes-dinamicas'); 
+    divOpcoes.innerHTML = ''; 
+    
+    if(document.getElementById('obs-produto')) document.getElementById('obs-produto').value = '';
 
     if(produtoSendoPersonalizado.caldas && produtoSendoPersonalizado.caldas.length > 0) {
         let htmlCaldas = `<div class="options-group"><h3 style="font-size:15px; margin-bottom:10px;">Calda Principal</h3>`;
@@ -137,9 +140,16 @@ function iniciarPersonalizacao(idProduto) {
 
 function adicionarAoCarrinho() {
     let precoFinal = produtoSendoPersonalizado.preco; let descricoes = [];
+    
     const calda = document.querySelector('input[name="calda"]:checked'); if(calda) descricoes.push(`Calda: ${calda.value}`);
     document.querySelectorAll('.comp-gratis:checked').forEach(cb => { descricoes.push(cb.value); });
     document.querySelectorAll('.acompanhamento:checked').forEach(cb => { descricoes.push(cb.value); precoFinal += parseFloat(cb.dataset.preco); });
+
+    const obsElement = document.getElementById('obs-produto');
+    const obs = obsElement ? obsElement.value.trim() : "";
+    if (obs !== "") {
+        descricoes.push(`<br><b style="color:#d32f2f;">Obs:</b> <i>${obs}</i>`);
+    }
 
     const novoItem = { 
         idProduto: produtoSendoPersonalizado.id, 
@@ -290,6 +300,14 @@ function atualizarCarrinhoView() {
     document.getElementById('cart-total').innerText = `R$ ${totalGeral.toFixed(2).replace('.', ',')}`;
 }
 
+// ================= LÓGICA DO TROCO =================
+function toggleTroco() {
+    const subPgto = document.querySelector('input[name="sub_pagamento_entrega"]:checked').value;
+    const boxTroco = document.getElementById('box-troco');
+    if(subPgto === 'Dinheiro') { boxTroco.classList.remove('hidden'); } 
+    else { boxTroco.classList.add('hidden'); document.getElementById('valor-troco').value = ""; }
+}
+
 // ================= MERCADO PAGO E PIX =================
 async function montarBrickCartao() {
     if (window.cardPaymentBrickController) window.cardPaymentBrickController.unmount();
@@ -324,10 +342,16 @@ async function montarBrickCartao() {
 
 function togglePagamentoUI() {
     const metodo = document.querySelector('input[name="metodo_pagamento"]:checked').value;
-    const formPix = document.getElementById('form-pix-container'); const formCartao = document.getElementById('form-cartao-container'); const btnFinalizar = document.getElementById('btn-finalizar-pedido');
-    if (metodo === 'online') { formPix.classList.add('hidden'); formCartao.classList.remove('hidden'); btnFinalizar.classList.add('hidden'); montarBrickCartao(); } 
-    else if (metodo === 'pix') { formPix.classList.remove('hidden'); formCartao.classList.add('hidden'); btnFinalizar.classList.remove('hidden'); } 
-    else { formPix.classList.add('hidden'); formCartao.classList.add('hidden'); btnFinalizar.classList.remove('hidden'); }
+    const formPix = document.getElementById('form-pix-container'); const formCartao = document.getElementById('form-cartao-container'); 
+    const formNaEntrega = document.getElementById('form-na-entrega-container'); const btnFinalizar = document.getElementById('btn-finalizar-pedido');
+    
+    if (metodo === 'online') { 
+        formPix.classList.add('hidden'); formCartao.classList.remove('hidden'); formNaEntrega.classList.add('hidden'); btnFinalizar.classList.add('hidden'); montarBrickCartao(); 
+    } else if (metodo === 'pix') { 
+        formPix.classList.remove('hidden'); formCartao.classList.add('hidden'); formNaEntrega.classList.add('hidden'); btnFinalizar.classList.remove('hidden'); 
+    } else { 
+        formPix.classList.add('hidden'); formCartao.classList.add('hidden'); formNaEntrega.classList.remove('hidden'); btnFinalizar.classList.remove('hidden'); 
+    }
 }
 
 function finalizarPedido() {
@@ -344,8 +368,18 @@ function finalizarPedido() {
         if(btn) { btn.innerHTML = "<i class='fas fa-spinner fa-spin'></i> Gerando PIX..."; btn.disabled = true; }
         processarPagamentoPix(email, nome, cpf);
     } else if (metodoPgto === 'entrega') {
+        const subPgto = document.querySelector('input[name="sub_pagamento_entrega"]:checked').value;
+        let msgPagamento = "💵 Na Entrega";
+        
+        if (subPgto === 'Debito') msgPagamento = "💳 Na Entrega (Débito)";
+        if (subPgto === 'Credito') msgPagamento = "💳 Na Entrega (Crédito)";
+        if (subPgto === 'Dinheiro') {
+            const troco = document.getElementById('valor-troco').value.trim();
+            msgPagamento = troco !== "" ? `💵 Dinheiro (Troco para R$ ${troco})` : `💵 Dinheiro (Sem troco)`;
+        }
+
         mostrarAlerta("Pedido Confirmado!", "Seu pedido está sendo preparado e será pago na entrega.", "sucesso");
-        salvarPedidoNoBanco("💵 Pagamento na Entrega");
+        salvarPedidoNoBanco(msgPagamento);
     }
 }
 
@@ -394,20 +428,24 @@ function salvarPedidoNoBanco(statusPagamento) {
     const tipo = document.querySelector('input[name="tipo_entrega"]:checked').value;
     const rua = document.getElementById('endereco-cliente') ? document.getElementById('endereco-cliente').value : "";
     const numero = document.getElementById('numero-cliente') ? document.getElementById('numero-cliente').value : "";
+    const zapInput = document.getElementById('whatsapp-cliente');
+    const telefoneFinal = (zapInput && zapInput.value.trim() !== "") ? zapInput.value.trim() : "Não informado";
+
     const total = carrinho.reduce((acc, item) => acc + item.preco, 0) + valorFreteAplicado;
     const enderecoCompleto = tipo === 'entrega' ? `${rua}, N°/Comp: ${numero}` : "Retirada no Local";
     
     const novoPedido = {
         id: Math.floor(Math.random() * 9000) + 1000, mesa: tipo === 'balcao' ? "Balcão" : "Delivery",
-        enderecoCliente: enderecoCompleto, telefoneCliente: "Não informado", tipoEntrega: tipo,
+        enderecoCliente: enderecoCompleto, telefoneCliente: telefoneFinal, tipoEntrega: tipo,
         itensResumo: carrinho.map(i => i.nome).join(' + '), itens: carrinho, total: total, status: "Em Preparo", pagamento: statusPagamento, data: new Date().toISOString()
     };
 
-    // ✨ MAGICA ACONTECE AQUI: Firebase ao invés de LocalStorage!
     db.collection("pedidos").add(novoPedido).then(() => {
         carrinho = []; valorFreteAplicado = 0; entregaPermitida = true; resetarBotaoFinalizar();
         if(document.getElementById('endereco-cliente')) document.getElementById('endereco-cliente').value = "";
         if(document.getElementById('numero-cliente')) document.getElementById('numero-cliente').value = "";
+        if(document.getElementById('whatsapp-cliente')) document.getElementById('whatsapp-cliente').value = "";
+        if(document.getElementById('valor-troco')) document.getElementById('valor-troco').value = "";
         if(document.getElementById('msg-frete')) document.getElementById('msg-frete').innerHTML = "";
         if(document.querySelector('input[name="tipo_entrega"][value="balcao"]')) { document.querySelector('input[name="tipo_entrega"][value="balcao"]').checked = true; toggleEntrega(); }
         if(document.querySelector('input[name="metodo_pagamento"][value="entrega"]')) { document.querySelector('input[name="metodo_pagamento"][value="entrega"]').checked = true; togglePagamentoUI(); }
