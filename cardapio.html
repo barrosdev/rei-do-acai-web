@@ -1,0 +1,170 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Cardápio - Rei do Açaí</title>
+    <link rel="stylesheet" href="cardapio.css">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <script src="https://sdk.mercadopago.com/js/v2"></script>
+</head>
+<body>
+
+    <header class="header">
+        <div class="logo-area">👑 Rei do Açaí</div>
+        <div class="nav-area">
+            <button class="nav-btn" onclick="mostrarSecao('inicio')">🏠 Início</button>
+            <button class="nav-btn btn-carrinho" onclick="mostrarSecao('carrinho')">
+                <i class="fas fa-shopping-cart"></i> Carrinho <span id="cart-count">0</span>
+            </button>
+        </div>
+    </header>
+
+    <main class="main-content">
+        <!-- TELA 1: CATÁLOGO -->
+        <section id="inicio" class="view-section active">
+            <div class="category-tabs">
+                <button class="tab active" onclick="filtrarCategoria('Copo', this)">Copos</button>
+                <button class="tab" onclick="filtrarCategoria('Barca', this)">Barcas</button>
+                <button class="tab" onclick="filtrarCategoria('Lanche', this)">Lanches</button>
+            </div>
+            <div class="product-grid" id="product-list"></div>
+        </section>
+
+        <!-- TELA 2: PERSONALIZAÇÃO -->
+        <section id="personalizar" class="view-section hidden">
+            <button class="nav-btn" style="margin-bottom: 15px; color: var(--purple-dark); border: 1px solid var(--purple-dark); background: transparent;" onclick="mostrarSecao('inicio')">⬅ Voltar ao Cardápio</button>
+            <div class="customization-card">
+                <div id="custom-img-container"></div>
+                <h2 id="custom-title" style="margin: 15px 0 5px 0; color: var(--purple-dark);">Nome</h2>
+                <p id="custom-price" style="font-size: 18px; font-weight: bold; color: var(--green-primary); margin-bottom: 20px;">R$ 0,00</p>
+                <div id="opcoes-dinamicas"></div>
+                <button id="btn-adicionar-produto" class="btn-action" style="margin-top: 20px; font-size: 16px; padding: 15px;" onclick="adicionarAoCarrinho()">Adicionar ao Carrinho ➔</button>
+            </div>
+        </section>
+
+        <!-- TELA 3: CARRINHO E CHECKOUT -->
+        <section id="carrinho" class="view-section hidden">
+            <div class="checkout-container">
+                <h2 class="section-title"><i class="fas fa-shopping-bag"></i> Seu Pedido</h2>
+                <div id="cart-items" style="margin-bottom: 30px; background: #fff; padding: 10px 20px; border-radius: 12px; border: 1px solid #eee;"></div>
+                
+                <div id="checkout-actions">
+                    <h2 class="section-title"><i class="fas fa-map-marker-alt"></i> Retirada ou Delivery?</h2>
+                    <div class="radio-card-group">
+                        <label class="radio-card">
+                            <input type="radio" name="tipo_entrega" value="balcao" checked onchange="toggleEntrega()">
+                            <i class="fas fa-store"></i>
+                            <span>Retirar no Balcão<br><small style="color:#888; font-weight: normal;">Grátis</small></span>
+                        </label>
+                        <label class="radio-card">
+                            <input type="radio" name="tipo_entrega" value="entrega" onchange="toggleEntrega()">
+                            <i class="fas fa-motorcycle"></i>
+                            <span>Delivery<br><small style="color:#888; font-weight: normal;">Receber em casa</small></span>
+                        </label>
+                    </div>
+                    
+                    <div id="box-entrega" class="hidden" style="margin-bottom: 25px; background: #fff; padding: 20px; border-radius: 12px; border: 1px solid #eee;">
+                        <label style="font-size: 13px; font-weight: bold; color: #555; display:block; margin-bottom: 5px;">Endereço de Entrega (Juiz de Fora):</label>
+                        <div class="autocomplete-container" style="position: relative; margin-bottom: 15px;">
+                            <input type="text" id="endereco-cliente" class="input-modern" placeholder="🔍 Digite sua rua..." autocomplete="off" oninput="sugerirEnderecos()">
+                            <div id="autocomplete-list" class="autocomplete-items"></div>
+                        </div>
+                        
+                        <label style="font-size: 13px; font-weight: bold; color: #555; display:block; margin-bottom: 5px;">Número / Complemento:</label>
+                        <input type="text" id="numero-cliente" class="input-modern" placeholder="Ex: 1000, Apto 201" style="margin-bottom: 15px;">
+                        <label style="font-size: 13px; font-weight: bold; color: #555; display:block; margin-bottom: 5px; margin-top: 15px;">Seu WhatsApp (Com DDD):</label>
+<input type="text" id="whatsapp-cliente" class="input-modern" placeholder="Ex: 32 99999-9999" style="margin-bottom: 15px;">
+                        <button class="btn-action" style="background: var(--purple-light); color: var(--purple-dark); border: none; width: 100%; padding: 14px;" onclick="calcularFreteReal()">Calcular Rota e Taxa</button>
+                        <div id="msg-frete" style="margin-top: 15px; font-weight: 500; text-align: center; font-size: 14px;"></div>
+                    </div>
+
+                    <div id="secao-pagamento">
+                        <h2 class="section-title"><i class="fas fa-wallet"></i> Forma de Pagamento</h2>
+                        <div class="radio-card-group">
+                            <label class="radio-card">
+                                <input type="radio" name="metodo_pagamento" value="pix" onchange="togglePagamentoUI()">
+                                <i class="fab fa-pix" style="color: #32bcad;"></i>
+                                <span>PIX<br><small style="color:#888; font-weight: normal;">Aprovação Rápida</small></span>
+                            </label>
+                            <label class="radio-card">
+                                <input type="radio" name="metodo_pagamento" value="online" onchange="togglePagamentoUI()">
+                                <i class="fas fa-credit-card" style="color: #ff9800;"></i>
+                                <span>Cartão<br><small style="color:#888; font-weight: normal;">Crédito pelo App</small></span>
+                            </label>
+                            <label class="radio-card">
+                                <input type="radio" name="metodo_pagamento" value="entrega" checked onchange="togglePagamentoUI()">
+                                <i class="fas fa-money-bill-wave" style="color: #4caf50;"></i>
+                                <span>Na Entrega<br><small style="color:#888; font-weight: normal;">Dinheiro/Máquina</small></span>
+                            </label>
+                        </div>
+
+                        <div id="form-pix-container" class="hidden" style="margin-bottom: 25px; background: #fff; padding: 20px; border-radius: 12px; border: 1px solid #eee;">
+                            <p style="margin-bottom: 15px; font-size: 14px; color: #555; font-weight: 600;">Preencha para gerar o PIX:</p>
+                            <div style="margin-bottom: 10px;">
+                                <input type="email" id="pix-email" class="input-modern" placeholder="E-mail de contato">
+                            </div>
+                            <div style="margin-bottom: 10px;">
+                                <input type="text" id="pix-nome" class="input-modern" placeholder="Nome completo">
+                            </div>
+                            <div style="display: flex; gap: 10px;">
+                                <select class="input-modern" style="width: 30%;">
+                                    <option value="CPF">CPF</option>
+                                </select>
+                                <input type="text" id="pix-cpf" class="input-modern" style="width: 70%;" placeholder="Número do CPF">
+                            </div>
+                        </div>
+
+                        <div id="form-cartao-container" class="hidden" style="margin-top: 20px; margin-bottom: 30px;">
+                            <div id="cardPaymentBrick_container"></div>
+                        </div>
+                    </div>
+
+                    <div class="cart-total-box">
+                        <span style="font-size: 16px; color: #555; font-weight: 600;">Total a Pagar</span>
+                        <span id="cart-total" style="font-size: 24px; font-weight: 800; color: var(--purple-dark);">R$ 0,00</span>
+                    </div>
+
+                    <button id="btn-finalizar-pedido" class="btn-action" style="width: 100%; padding: 18px; font-size: 18px; border-radius: 10px; box-shadow: 0 4px 15px rgba(103, 58, 183, 0.3);" onclick="finalizarPedido()">Confirmar Pedido ➔</button>
+                </div>
+            </div>
+        </section>
+
+        <!-- TELA 4: PAGAMENTO PIX -->
+        <section id="tela-pix" class="view-section hidden" style="text-align: center; padding: 20px;">
+            <div style="background: white; padding: 30px; border-radius: 12px; box-shadow: 0 4px 15px rgba(0,0,0,0.1); border-top: 5px solid var(--green-primary); max-width: 500px; margin: 0 auto;">
+                <h2 style="color: var(--green-primary); margin-bottom: 10px;"><i class="fab fa-pix"></i> Pague com PIX</h2>
+                <p style="color: #555; margin-bottom: 20px;">Copie o código abaixo e cole no aplicativo do seu banco para finalizar a compra.</p>
+                <textarea id="input-pix" readonly style="width: 100%; height: 80px; padding: 15px; border: 2px dashed #ccc; border-radius: 8px; font-size: 14px; margin-bottom: 15px; background: #f9f9f9; resize: none;"></textarea>
+                <button class="btn-action" onclick="copiarPix()" style="width: 100%; padding: 15px; font-size: 16px; margin-bottom: 20px; background: var(--green-primary);">
+                    <i class="fas fa-copy"></i> Copiar Código PIX
+                </button>
+                <div style="background: #fff3cd; color: #856404; padding: 15px; border-radius: 8px; font-weight: bold; margin-bottom: 15px;">
+                    ⏳ O código expira em: <span id="pix-timer" style="font-size: 20px; display: block; margin-top: 5px;">10:00</span>
+                </div>
+                
+                <button class="btn-action" onclick="aprovarPixTeste()" style="width: 100%; padding: 15px; font-size: 16px; margin-bottom: 10px; background: var(--purple-dark);">
+                    ✅ Simular Pagamento Aprovado
+                </button>
+                <button class="nav-btn" style="color: var(--purple-dark); border: 1px solid var(--purple-dark); background: transparent; width: 100%;" onclick="window.location.reload()">⬅ Cancelar Pedido</button>
+            </div>
+        </section>
+
+        <!-- MODAL DE ALERTAS -->
+        <div id="modal-alerta" class="modal-overlay modal-oculto">
+            <div class="modal-box">
+                <div id="modal-icon" class="modal-icon"></div>
+                <h3 id="modal-title">Título</h3>
+                <p id="modal-message">Mensagem do alerta vai aqui.</p>
+                <button class="btn-modal" onclick="fecharAlerta()">Entendi</button>
+            </div>
+        </div>
+
+    </main>
+
+    <!-- Bibliotecas do Firebase -->
+    <script src="https://www.gstatic.com/firebasejs/10.8.1/firebase-app-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/10.8.1/firebase-firestore-compat.js"></script>
+    <script src="cardapio.js"></script>
+</body>
+</html>

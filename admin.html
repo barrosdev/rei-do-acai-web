@@ -1,0 +1,188 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Painel de Gestão - Rei do Açaí</title>
+    <link rel="stylesheet" href="admin.css">
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <style>
+        .form-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 15px; margin-top: 15px; }
+        .form-full { grid-column: span 2; }
+        .form-group { display: flex; flex-direction: column; text-align: left; }
+        .form-group label { font-size: 13px; font-weight: bold; color: var(--purple-dark); margin-bottom: 5px; }
+        .form-group input, .form-group select { padding: 10px; border: 1px solid #ccc; border-radius: 6px; font-size: 14px; }
+        .form-group small { font-size: 11px; color: #777; margin-top: 4px; }
+        .detalhes-pedido { list-style: none; padding: 0; margin: 0; font-size: 13px; line-height: 1.4; }
+        .detalhes-pedido li { margin-bottom: 8px; }
+        .modal-overlay { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.6); display: flex; align-items: center; justify-content: center; z-index: 9999; }
+        .modal-oculto { display: none !important; }
+        .modal-box { background: #fff; padding: 30px; border-radius: 12px; width: 90%; max-width: 400px; text-align: center; }
+    </style>
+</head>
+<body>
+
+    <!-- TELA DE LOGIN -->
+    <div id="login-view" class="container-login">
+        <div class="login-box">
+            <h2>Rei do Açaí</h2>
+            <div class="input-group"><label>Usuário</label><input type="text" id="username" placeholder="admin"></div>
+            <div class="input-group"><label>Senha</label><input type="password" id="password" placeholder="***"></div>
+            <button class="btn" onclick="fazerLogin()">Entrar no Painel</button>
+        </div>
+    </div>
+
+    <!-- PAINEL ADMINISTRATIVO -->
+    <div id="admin-view" class="hidden">
+        <aside class="sidebar">
+            <h2>👑 Rei do Açaí</h2>
+            <ul id="menu-lateral">
+                <li class="active" onclick="navegarAba('dashboard', this)">📊 Dashboard</li>
+                <li onclick="navegarAba('historico', this)">📦 Pedidos Realizados</li>
+                <li onclick="navegarAba('espera', this)">⏳ A Espera</li>
+                <li onclick="navegarAba('lucros', this)">📈 Lucros</li>
+                <li onclick="navegarAba('cardapio', this)">📋 Cardápio</li>
+                <li onclick="navegarAba('configuracoes', this)">⚙️ Configurações</li>
+            </ul>
+            <button class="btn btn-danger" onclick="sair()">Sair</button>
+        </aside>
+
+        <main class="main-content">
+            <div class="header">
+                <h2 id="titulo-secao">Visão Geral - Hoje</h2>
+                <div style="display: flex; gap: 10px;">
+                    <button class="btn" style="width: auto; background: var(--purple-dark);" onclick="carregarTudo()">🔄 Atualizar</button>
+                    <button class="btn btn-danger" style="width: auto; margin-top: 0; background: #dc3545;" onclick="resetarSistema()">⚠️ Reset Total</button>
+                </div>
+            </div>
+
+            <!-- DASHBOARD -->
+            <section id="sec-dashboard" class="admin-section active">
+                <div class="cards-row">
+                    <div class="card card-purple"><h3>Pedidos na Fila</h3><div class="value" id="dash-pedidos">0</div></div>
+                    <div class="card card-green"><h3>Vendas Totais Hoje</h3><div class="value" id="dash-vendas">R$ 0,00</div></div>
+                </div>
+                <div class="dashboard-grid">
+                    <div class="chart-container" style="background:#fff; padding:20px; border-radius:12px;">
+                        <h3>Evolução dos Lucros</h3><canvas id="lucrosChart" height="120"></canvas>
+                    </div>
+                    <div class="table-container">
+                        <h3>A Espera (Resumo)</h3>
+                        <table><thead><tr><th>Pedido #</th><th>Status</th></tr></thead><tbody id="tabela-dash-espera"></tbody></table>
+                    </div>
+                </div>
+            </section>
+
+            <!-- A ESPERA -->
+            <section id="sec-espera" class="admin-section hidden">
+                <div class="table-container">
+                    <table>
+                        <thead><tr><th>Pedido #</th><th>Cliente/Local</th><th style="width: 35%;">Itens Detalhados</th><th>Status Bar</th><th>Ação</th></tr></thead>
+                        <tbody id="tabela-espera"></tbody>
+                    </table>
+                </div>
+            </section>
+
+            <!-- HISTÓRICO -->
+            <section id="sec-historico" class="admin-section hidden">
+                <div class="table-container">
+                    <table>
+                        <thead><tr><th>Pedido #</th><th>Data/Hora</th><th>Itens</th><th>Total</th><th>Status</th></tr></thead>
+                        <tbody id="tabela-historico"></tbody>
+                    </table>
+                </div>
+            </section>
+
+            <!-- LUCROS -->
+            <section id="sec-lucros" class="admin-section hidden">
+                <div class="cards-row">
+                    <div class="card card-purple"><h3>Lucro de Hoje</h3><div class="value" id="lucro-hoje">R$ 0,00</div></div>
+                    <div class="card card-green"><h3>Lucro da Semana</h3><div class="value" id="lucro-semana">R$ 0,00</div></div>
+                    <div class="card card-purple"><h3>Lucro do Mês</h3><div class="value" id="lucro-mes">R$ 0,00</div></div>
+                </div>
+            </section>
+
+            <!-- CARDÁPIO -->
+            <section id="sec-cardapio" class="admin-section hidden">
+                <div style="background: var(--white); padding: 25px; border-radius: 12px; margin-bottom: 25px; box-shadow: 0 4px 15px rgba(0,0,0,0.05);">
+                    <h3 style="color: var(--purple-dark); margin-bottom: 5px; border-bottom: 2px solid var(--bg-light); padding-bottom: 10px;">✨ Configurar Novo Item</h3>
+                    <div class="form-grid">
+                        <div class="form-group"><label>Nome</label><input type="text" id="novo-nome" placeholder="Ex: Copo Supremo"></div>
+                        <div class="form-group"><label>Categoria</label><select id="nova-cat"><option value="Copo">Copo</option><option value="Barca">Barca</option><option value="Lanche">Lanche</option></select></div>
+                        <div class="form-group"><label>Preço Base (R$)</label><input type="number" id="novo-preco" placeholder="Ex: 15.00" step="0.01"></div>
+                        <div class="form-group"><label>Imagem do Produto</label><input type="file" id="nova-img" accept="image/*" style="padding: 7px;"></div>
+                        
+                        <div class="form-group form-full"><label>Opções de Caldas</label><input type="text" id="novas-caldas" placeholder="Ex: Leite Condensado, Morango"><small>Separe os nomes por vírgula (,)</small></div>
+                        <div class="form-group form-full"><label>Complementos Grátis (Padrão)</label><input type="text" id="novos-comps-gratis" placeholder="Ex: Leite em Pó, Granola, Paçoca"><small>Separe por vírgula (,)</small></div>
+                        <div class="form-group form-full"><label>Complementos Extras Pagos</label><input type="text" id="novos-comps" placeholder="Ex: Nutella:4.00, Ouro Branco:2.50"><small>Formato obrigatório: <b>Nome:Preço</b> separados por vírgula.</small></div>
+                    </div>
+                    <button class="btn" style="width: 100%; margin-top: 20px; background: var(--green-primary);" onclick="adicionarProduto()">➕ Adicionar ao Cardápio Digital</button>
+                </div>
+                <div class="table-container">
+                    <table>
+                        <thead><tr><th>Visível</th><th>Produto</th><th>Categoria</th><th>Preço Base</th><th>Ações</th></tr></thead>
+                        <tbody id="tabela-cardapio"></tbody>
+                    </table>
+                </div>
+            </section>
+
+            <!-- CONFIGURAÇÕES -->
+            <section id="sec-configuracoes" class="admin-section hidden">
+                <div style="background: var(--white); padding: 25px; border-radius: 12px; box-shadow: 0 4px 15px rgba(0,0,0,0.05); max-width: 800px;">
+                    <h3 style="color: var(--purple-dark); margin-bottom: 15px; border-bottom: 2px solid var(--bg-light); padding-bottom: 10px; display: flex; justify-content: space-between; align-items: center;">
+                        <span>📍 Configurações da Loja</span>
+                        <span id="nuvem-status" style="font-size: 12px; padding: 4px 10px; background: #e0e0e0; border-radius: 20px; color: #555; font-weight: bold;">🔄 Conectando...</span>
+                    </h3>
+
+                    <div style="background: #f0fdf4; border: 1px solid #c6f6d5; padding: 18px; border-radius: 8px; margin-bottom: 20px;">
+                        <h4 style="color: #22543d; margin-bottom: 10px;"><i class="fas fa-cloud"></i> Valores Ativos no Servidor</h4>
+                        <p style="font-size: 14px; margin-bottom: 5px;"><strong>Endereço Base:</strong> <span id="cloud-endereco" style="color: #444;">Carregando...</span></p>
+                        <p style="font-size: 14px; margin-bottom: 5px;"><strong>Raio Máximo:</strong> <span id="cloud-raio" style="color: #444;">--</span> km</p>
+                        <p style="font-size: 14px;"><strong>Taxa de Entrega:</strong> R$ <span id="cloud-taxa" style="color: #444;">--</span></p>
+                    </div>
+
+                    <h4 style="color: var(--purple-dark); margin-bottom: 15px;">✏️ Enviar Nova Configuração</h4>
+                    <div class="form-grid">
+                        <div class="form-group form-full">
+                            <label>Endereço Base da Loja</label>
+                            <input type="text" id="config-rua" placeholder="Cole o endereço completo aqui (para o GPS)">
+                        </div>
+                        <div class="form-group"><label>Raio Máximo (KM)</label><input type="number" id="config-raio" placeholder="Ex: 5" step="0.5"></div>
+                        <div class="form-group"><label>Taxa de Entrega (R$)</label><input type="number" id="config-taxa" placeholder="Ex: 6.50" step="0.5"></div>
+                        <div class="form-group form-full">
+                            <label>Limite Global de Complementos Grátis</label>
+                            <input type="number" id="config-limite-gratis" placeholder="Ex: 4">
+                            <small>Quantos itens grátis o cliente pode escolher por produto.</small>
+                        </div>
+                    </div>
+                    <button class="btn" style="width: 100%; margin-top: 25px; background: var(--green-primary);" onclick="prepararSalvamento()">💾 Salvar Configurações</button>
+                </div>
+            </section>
+        </main>
+    </div>
+
+    <!-- MODAL DE SENHA -->
+    <div id="modal-senha" class="modal-overlay modal-oculto">
+        <div class="modal-box">
+            <h3 style="color: var(--purple-dark); margin-bottom: 10px;"><i class="fas fa-shield-alt"></i> Acesso Restrito</h3>
+            <p style="margin-bottom: 20px; color: #555;">Digite a senha de Administrador para gravar as alterações na nuvem:</p>
+            <input type="password" id="input-senha-modal" placeholder="Senha..." style="width: 100%; padding: 12px; border: 2px solid #eaeaea; border-radius: 8px; margin-bottom: 20px; text-align: center;">
+            <div style="display: flex; gap: 10px;">
+                <button class="btn btn-danger" style="margin-top: 0;" onclick="fecharModalSenha()">Cancelar</button>
+                <button class="btn" style="background: var(--green-primary);" onclick="confirmarSenhaModal()">Confirmar</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- SOM DE NOTIFICAÇÃO -->
+    <audio id="som-notificacao" src="https://assets.mixkit.co/active_storage/sfx/2869/2869-preview.mp3" preload="auto"></audio>
+
+<!-- Bibliotecas do Firebase -->
+    <script src="https://www.gstatic.com/firebasejs/10.8.1/firebase-app-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/10.8.1/firebase-auth-compat.js"></script> <!-- ADICIONE ESTA LINHA -->
+    <script src="https://www.gstatic.com/firebasejs/10.8.1/firebase-firestore-compat.js"></script>
+    <script src="admin.js"></script>
+    
+</body>
+</html>
