@@ -8,14 +8,6 @@
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     <style>
-        .form-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 15px; margin-top: 15px; }
-        .form-full { grid-column: span 2; }
-        .form-group { display: flex; flex-direction: column; text-align: left; }
-        .form-group label { font-size: 13px; font-weight: bold; color: var(--purple-dark); margin-bottom: 5px; }
-        .form-group input, .form-group select { padding: 10px; border: 1px solid #ccc; border-radius: 6px; font-size: 14px; }
-        .form-group small { font-size: 11px; color: #777; margin-top: 4px; }
-        .detalhes-pedido { list-style: none; padding: 0; margin: 0; font-size: 13px; line-height: 1.4; }
-        .detalhes-pedido li { margin-bottom: 8px; }
         .modal-overlay { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.6); display: flex; align-items: center; justify-content: center; z-index: 9999; }
         .modal-oculto { display: none !important; }
         .modal-box { background: #fff; padding: 30px; border-radius: 12px; width: 90%; max-width: 400px; text-align: center; }
@@ -23,17 +15,15 @@
 </head>
 <body>
 
-    <!-- TELA DE LOGIN -->
     <div id="login-view" class="container-login">
         <div class="login-box">
             <h2>Rei do Açaí</h2>
             <div class="input-group"><label>Usuário</label><input type="text" id="username" placeholder="admin"></div>
             <div class="input-group"><label>Senha</label><input type="password" id="password" placeholder="***"></div>
-            <button class="btn" onclick="fazerLogin()">Entrar no Painel</button>
+            <button type="button" class="btn" onclick="fazerLogin()">Entrar no Painel</button>
         </div>
     </div>
 
-    <!-- PAINEL ADMINISTRATIVO -->
     <div id="admin-view" class="hidden">
         <aside class="sidebar">
             <h2>👑 Rei do Açaí</h2>
@@ -45,19 +35,17 @@
                 <li onclick="navegarAba('cardapio', this)">📋 Cardápio</li>
                 <li onclick="navegarAba('configuracoes', this)">⚙️ Configurações</li>
             </ul>
-            <button class="btn btn-danger" onclick="sair()">Sair</button>
+            <button type="button" class="btn btn-danger" onclick="sair()">Sair</button>
         </aside>
 
         <main class="main-content">
             <div class="header">
                 <h2 id="titulo-secao">Visão Geral - Hoje</h2>
                 <div style="display: flex; gap: 10px;">
-                    <button class="btn" style="width: auto; background: var(--purple-dark);" onclick="carregarTudo()">🔄 Atualizar</button>
-                    <button class="btn btn-danger" style="width: auto; margin-top: 0; background: #dc3545;" onclick="resetarSistema()">⚠️ Reset Total</button>
+                    <button type="button" class="btn" style="width: auto; background: var(--purple-dark);" onclick="carregarTudo()">🔄 Atualizar</button>
                 </div>
             </div>
 
-            <!-- DASHBOARD -->
             <section id="sec-dashboard" class="admin-section active">
                 <div class="cards-row">
                     <div class="card card-purple"><h3>Pedidos na Fila</h3><div class="value" id="dash-pedidos">0</div></div>
@@ -73,28 +61,25 @@
                     </div>
                 </div>
             </section>
-
-            <!-- A ESPERA -->
+            
             <section id="sec-espera" class="admin-section hidden">
                 <div class="table-container">
-                    <table>
-                        <thead><tr><th>Pedido #</th><th>Cliente/Local</th><th style="width: 35%;">Itens Detalhados</th><th>Status Bar</th><th>Ação</th></tr></thead>
-                        <tbody id="tabela-espera"></tbody>
-                    </table>
+                    <table><thead><tr><th>Pedido #</th><th>Cliente/Local</th><th style="width: 35%;">Itens Detalhados</th><th>Status Bar</th><th>Ação</th></tr></thead><tbody id="tabela-espera"></tbody></table>
                 </div>
             </section>
-
-            <!-- HISTÓRICO -->
+            
             <section id="sec-historico" class="admin-section hidden">
+                <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 15px;">
+                    <h3 style="color: var(--purple-dark);"><i class="fas fa-history"></i> Histórico de Vendas</h3>
+                    <button type="button" class="btn-modern" style="width: auto; padding: 10px 15px; font-size: 14px; background: linear-gradient(135deg, #1d6f42 0%, #155724 100%);" onclick="exportarRelatorioCSV()">
+                        <i class="fas fa-file-excel"></i> Exportar para Excel (.CSV)
+                    </button>
+                </div>
                 <div class="table-container">
-                    <table>
-                        <thead><tr><th>Pedido #</th><th>Data/Hora</th><th>Itens</th><th>Total</th><th>Status</th></tr></thead>
-                        <tbody id="tabela-historico"></tbody>
-                    </table>
+                    <table><thead><tr><th>Pedido #</th><th>Data/Hora</th><th>Itens</th><th>Total</th><th>Status</th></tr></thead><tbody id="tabela-historico"></tbody></table>
                 </div>
             </section>
-
-            <!-- LUCROS -->
+            
             <section id="sec-lucros" class="admin-section hidden">
                 <div class="cards-row">
                     <div class="card card-purple"><h3>Lucro de Hoje</h3><div class="value" id="lucro-hoje">R$ 0,00</div></div>
@@ -103,22 +88,92 @@
                 </div>
             </section>
 
-            <!-- CARDÁPIO -->
             <section id="sec-cardapio" class="admin-section hidden">
-                <div style="background: var(--white); padding: 25px; border-radius: 12px; margin-bottom: 25px; box-shadow: 0 4px 15px rgba(0,0,0,0.05);">
-                    <h3 style="color: var(--purple-dark); margin-bottom: 5px; border-bottom: 2px solid var(--bg-light); padding-bottom: 10px;">✨ Configurar Novo Item</h3>
-                    <div class="form-grid">
-                        <div class="form-group"><label>Nome</label><input type="text" id="novo-nome" placeholder="Ex: Copo Supremo"></div>
-                        <div class="form-group"><label>Categoria</label><select id="nova-cat"><option value="Copo">Copo</option><option value="Barca">Barca</option><option value="Lanche">Lanche</option></select></div>
-                        <div class="form-group"><label>Preço Base (R$)</label><input type="number" id="novo-preco" placeholder="Ex: 15.00" step="0.01"></div>
-                        <div class="form-group"><label>Imagem do Produto</label><input type="file" id="nova-img" accept="image/*" style="padding: 7px;"></div>
-                        
-                        <div class="form-group form-full"><label>Opções de Caldas</label><input type="text" id="novas-caldas" placeholder="Ex: Leite Condensado, Morango"><small>Separe os nomes por vírgula (,)</small></div>
-                        <div class="form-group form-full"><label>Complementos Grátis (Padrão)</label><input type="text" id="novos-comps-gratis" placeholder="Ex: Leite em Pó, Granola, Paçoca"><small>Separe por vírgula (,)</small></div>
-                        <div class="form-group form-full"><label>Complementos Extras Pagos</label><input type="text" id="novos-comps" placeholder="Ex: Nutella:4.00, Ouro Branco:2.50"><small>Formato obrigatório: <b>Nome:Preço</b> separados por vírgula.</small></div>
+                <div style="background: var(--white); padding: 30px; border-radius: 12px; margin-bottom: 25px; box-shadow: 0 4px 15px rgba(0,0,0,0.05);">
+                    <h3 style="color: var(--purple-dark); margin-bottom: 20px;">✨ Adicionar Novo Produto</h3>
+                    
+                    <div class="wizard-progress">
+                        <div class="step-indicator active" id="ind-step-1">1. Informações Básicas</div>
+                        <div class="step-indicator" id="ind-step-2">2. Imagem</div>
+                        <div class="step-indicator" id="ind-step-3">3. Extras e Complementos</div>
                     </div>
-                    <button class="btn" style="width: 100%; margin-top: 20px; background: var(--green-primary);" onclick="adicionarProduto()">➕ Adicionar ao Cardápio Digital</button>
+
+                    <div id="step-1" class="wizard-step active">
+                        <div class="form-grid">
+                            <div class="form-group form-full"><label>Nome do Produto</label><input type="text" id="novo-nome" placeholder="Ex: Copo Supremo"></div>
+                            <div class="form-group">
+                                <label>Categoria</label>
+                                <select id="nova-cat">
+                                    <option value="Copo">Copo</option>
+                                    <option value="Tigela">Tigela</option>
+                                    <option value="Bebidas">Bebidas</option>
+                                    <option value="Pote de Açaí">Pote de Açaí</option>
+                                    <option value="Promoção">Promoção</option>
+                                </select>
+                            </div>
+                            <div class="form-group"><label>Preço Base (R$)</label><input type="number" id="novo-preco" placeholder="Ex: 15.00" step="0.01"></div>
+                        </div>
+                        <div class="wizard-buttons" style="justify-content: flex-end;">
+                            <button type="button" class="btn" style="width: auto;" onclick="navegarWizard(2)">Avançar <i class="fas fa-arrow-right"></i></button>
+                        </div>
+                    </div>
+
+                    <div id="step-2" class="wizard-step hidden">
+                        <div class="form-group form-full">
+                            <label>Foto do Produto</label>
+                            <label class="custom-file-upload">
+                                <input type="file" id="nova-img" accept="image/*" onchange="previewImagem(event)">
+                                <i class="fas fa-image"></i>
+                                <span>Clique aqui para procurar uma imagem no seu computador</span>
+                            </label>
+                            <div class="img-preview-container">
+                                <img id="img-preview" class="img-preview" alt="Preview da Imagem">
+                            </div>
+                        </div>
+                        <div class="wizard-buttons">
+                            <button type="button" class="btn-outline" style="width: auto;" onclick="navegarWizard(1)"><i class="fas fa-arrow-left"></i> Voltar</button>
+                            <button type="button" class="btn" style="width: auto;" onclick="navegarWizard(3)">Avançar <i class="fas fa-arrow-right"></i></button>
+                        </div>
+                    </div>
+
+                    <div id="step-3" class="wizard-step hidden">
+                        <div class="form-group form-full">
+                            <label><i class="fas fa-tint" style="color:var(--purple-light)"></i> Caldas</label>
+                            <div class="input-row">
+                                <input type="text" id="input-calda" placeholder="Ex: Leite Condensado" onkeypress="if(event.key === 'Enter') addTag('calda')">
+                                <button type="button" class="btn-small" onclick="addTag('calda')"><i class="fas fa-plus"></i></button>
+                            </div>
+                            <div id="tags-calda" class="tags-container"><span style="color:#aaa; font-size:12px; font-weight:normal; margin-top:5px;">Nenhuma calda adicionada.</span></div>
+                        </div>
+
+                        <div class="form-group form-full" style="margin-top: 15px;">
+                            <label><i class="fas fa-gift" style="color:var(--purple-light)"></i> Complementos Grátis</label>
+                            <div class="input-row">
+                                <input type="text" id="input-gratis" placeholder="Ex: Leite em Pó" onkeypress="if(event.key === 'Enter') addTag('gratis')">
+                                <button type="button" class="btn-small" onclick="addTag('gratis')"><i class="fas fa-plus"></i></button>
+                            </div>
+                            <div id="tags-gratis" class="tags-container"><span style="color:#aaa; font-size:12px; font-weight:normal; margin-top:5px;">Nenhum complemento grátis.</span></div>
+                        </div>
+
+                        <div class="form-group form-full" style="margin-top: 15px;">
+                            <label><i class="fas fa-star" style="color:var(--green-primary)"></i> Complementos Pagos</label>
+                            <div class="input-row">
+                                <input type="text" id="input-pago-nome" placeholder="Nome (Ex: Nutella)">
+                                <input type="number" id="input-pago-preco" placeholder="Preço (Ex: 4.00)" step="0.5" style="max-width: 150px;" onkeypress="if(event.key === 'Enter') addTagPago()">
+                                <button type="button" class="btn-small" onclick="addTagPago()"><i class="fas fa-plus"></i></button>
+                            </div>
+                            <div id="tags-pagos" class="tags-container"><span style="color:#aaa; font-size:12px; font-weight:normal; margin-top:5px;">Nenhum extra pago.</span></div>
+                        </div>
+
+                        <div class="wizard-buttons">
+                            <button type="button" class="btn-outline" style="width: auto;" onclick="navegarWizard(2)"><i class="fas fa-arrow-left"></i> Voltar</button>
+                            <button type="button" class="btn-modern" style="width: auto;" onclick="adicionarProduto()">
+                                <i class="fas fa-check-circle"></i> Publicar Produto
+                            </button>
+                        </div>
+                    </div>
                 </div>
+
                 <div class="table-container">
                     <table>
                         <thead><tr><th>Visível</th><th>Produto</th><th>Categoria</th><th>Preço Base</th><th>Ações</th></tr></thead>
@@ -127,81 +182,168 @@
                 </div>
             </section>
 
-            <!-- CONFIGURAÇÕES -->
             <section id="sec-configuracoes" class="admin-section hidden">
                 <div style="background: var(--white); padding: 25px; border-radius: 12px; box-shadow: 0 4px 15px rgba(0,0,0,0.05); max-width: 800px;">
                     <h3 style="color: var(--purple-dark); margin-bottom: 15px; border-bottom: 2px solid var(--bg-light); padding-bottom: 10px; display: flex; justify-content: space-between; align-items: center;">
-                        <span>📍 Configurações da Loja</span>
+                        <span>⚙️ Configurações do Sistema</span>
                         <span id="nuvem-status" style="font-size: 12px; padding: 4px 10px; background: #e0e0e0; border-radius: 20px; color: #555; font-weight: bold;">🔄 Conectando...</span>
                     </h3>
 
-                    <div style="background: #f0fdf4; border: 1px solid #c6f6d5; padding: 18px; border-radius: 8px; margin-bottom: 20px;">
-                        <h4 style="color: #22543d; margin-bottom: 10px;"><i class="fas fa-cloud"></i> Valores Ativos no Servidor</h4>
-                        <p style="font-size: 14px; margin-bottom: 5px;"><strong>Endereço Base:</strong> <span id="cloud-endereco" style="color: #444;">Carregando...</span></p>
-                        <p style="font-size: 14px; margin-bottom: 5px;"><strong>Raio Máximo:</strong> <span id="cloud-raio" style="color: #444;">--</span> km</p>
-                        <p style="font-size: 14px;"><strong>Taxa de Entrega:</strong> R$ <span id="cloud-taxa" style="color: #444;">--</span></p>
+                    <div style="background: #f0fdf4; border: 1px solid #c6f6d5; padding: 18px; border-radius: 8px; margin-bottom: 30px;">
+                        <h4 style="color: #22543d; margin-bottom: 12px; border-bottom: 1px solid #c6f6d5; padding-bottom: 8px;"><i class="fas fa-cloud"></i> Valores Ativos Atualmente</h4>
+                        <div style="display: flex; flex-wrap: wrap; gap: 20px;">
+                            <div style="flex: 1; min-width: 250px;">
+                                <h5 style="color: #276749; margin-bottom: 8px;"><i class="fas fa-truck"></i> Logística de Entrega</h5>
+                                <p style="font-size: 14px; margin-bottom: 5px;"><strong>Endereço Base:</strong> <span id="cloud-endereco" style="color: #444;">Carregando...</span></p>
+                                <p style="font-size: 14px; margin-bottom: 5px;"><strong>Raio Máximo:</strong> <span id="cloud-raio" style="color: #444;">--</span> km</p>
+                                <p style="font-size: 14px;"><strong>Taxa de Entrega:</strong> R$ <span id="cloud-taxa" style="color: #444;">--</span></p>
+                            </div>
+                            <div style="flex: 1; min-width: 250px; border-left: 2px dashed #c6f6d5; padding-left: 20px;">
+                                <h5 style="color: #276749; margin-bottom: 8px;"><i class="fas fa-box-open"></i> Regras de Pedidos</h5>
+                                <p style="font-size: 14px;"><strong>Limite Global de Complementos Grátis:</strong> <span id="cloud-limite" style="color: #444; font-weight: bold; font-size: 16px;">--</span> itens</p>
+                            </div>
+                        </div>
                     </div>
 
-                    <h4 style="color: var(--purple-dark); margin-bottom: 15px;">✏️ Enviar Nova Configuração</h4>
-                    <div class="form-grid">
+                    <h4 style="color: var(--purple-dark); margin-bottom: 15px;"><i class="fas fa-map-marked-alt"></i> Atualizar Logística</h4>
+                    <div class="form-grid" style="padding-bottom: 25px; border-bottom: 1px dashed #ccc; margin-bottom: 25px;">
                         <div class="form-group form-full">
-                            <label>Endereço Base da Loja</label>
-                            <input type="text" id="config-rua" placeholder="Cole o endereço completo aqui (para o GPS)">
+                            <label>Novo Endereço Base da Loja (Deixe em branco se não quiser mudar)</label>
+                            <div class="autocomplete-container" style="margin-bottom: 10px;">
+                                <input type="text" id="config-rua" placeholder="1. Digite e selecione a rua da loja..." autocomplete="off" oninput="sugerirEnderecosLoja()">
+                                <div id="autocomplete-list-loja" class="autocomplete-items"></div>
+                            </div>
+                            <input type="text" id="config-numero" placeholder="2. Número da loja (Ex: 1000)">
                         </div>
-                        <div class="form-group"><label>Raio Máximo (KM)</label><input type="number" id="config-raio" placeholder="Ex: 5" step="0.5"></div>
-                        <div class="form-group"><label>Taxa de Entrega (R$)</label><input type="number" id="config-taxa" placeholder="Ex: 6.50" step="0.5"></div>
+
+                        <div class="form-group"><label>Novo Raio (KM)</label><input type="number" id="config-raio" placeholder="Ex: 5" step="0.5"></div>
+                        <div class="form-group"><label>Nova Taxa por KM (R$)</label><input type="number" id="config-taxa" placeholder="Ex: 1.50" step="0.10"></div>
+                    </div>
+
+                    <h4 style="color: var(--purple-dark); margin-bottom: 15px;"><i class="fas fa-shopping-bag"></i> Atualizar Regras de Pedidos</h4>
+                    <div class="form-grid">
                         <div class="form-group form-full">
                             <label>Limite Global de Complementos Grátis</label>
                             <input type="number" id="config-limite-gratis" placeholder="Ex: 4">
-                            <small>Quantos itens grátis o cliente pode escolher por produto.</small>
                         </div>
                     </div>
-                    <button class="btn" style="width: 100%; margin-top: 25px; background: var(--green-primary);" onclick="prepararSalvamento()">💾 Salvar Configurações</button>
+
+                    <button type="button" class="btn-modern" style="margin-top: 30px;" onclick="prepararSalvamento()">
+                        <i class="fas fa-lock"></i> Salvar e Autenticar Alterações
+                    </button>
                 </div>
             </section>
         </main>
     </div>
 
-    <!-- MODAL DE SENHA -->
     <div id="modal-senha" class="modal-overlay modal-oculto">
         <div class="modal-box">
             <h3 style="color: var(--purple-dark); margin-bottom: 10px;"><i class="fas fa-shield-alt"></i> Acesso Restrito</h3>
-            <p style="margin-bottom: 20px; color: #555;">Digite a senha de Administrador para gravar as alterações na nuvem:</p>
-            <input type="password" id="input-senha-modal" placeholder="Senha..." style="width: 100%; padding: 12px; border: 2px solid #eaeaea; border-radius: 8px; margin-bottom: 20px; text-align: center;">
+            <p style="margin-bottom: 20px; color: #555;">Digite sua senha de login (Administrador) para autorizar:</p>
+            <input type="password" id="input-senha-modal" placeholder="Senha de Login..." style="width: 100%; padding: 12px; border: 2px solid #eaeaea; border-radius: 8px; margin-bottom: 20px; text-align: center;">
             <div style="display: flex; gap: 10px;">
-                <button class="btn btn-danger" style="margin-top: 0;" onclick="fecharModalSenha()">Cancelar</button>
-                <button class="btn" style="background: var(--green-primary);" onclick="confirmarSenhaModal()">Confirmar</button>
+                <button type="button" class="btn btn-danger" style="margin-top: 0;" onclick="fecharModalSenha()">Cancelar</button>
+                <button type="button" id="btn-confirmar-senha" class="btn" style="background: var(--green-primary);" onclick="confirmarSenhaModal()">Confirmar</button>
             </div>
         </div>
     </div>
 
-    <!-- SOM DE NOTIFICAÇÃO -->
-    <audio id="som-notificacao" src="https://assets.mixkit.co/active_storage/sfx/2869/2869-preview.mp3" preload="auto"></audio>
-
-    <!-- MODAL COMANDA (DETALHES DO PEDIDO) -->
     <div id="modal-detalhes-pedido" class="modal-overlay modal-oculto">
         <div class="modal-box" style="max-width: 500px; text-align: left; background: #fff;">
             <div style="display: flex; justify-content: space-between; align-items: center; border-bottom: 2px solid var(--bg-light); padding-bottom: 10px; margin-bottom: 15px;">
                 <h3 id="detalhe-id" style="color: var(--purple-dark); margin: 0; font-size: 22px;">Pedido #---</h3>
-                <button onclick="fecharModalDetalhes()" style="background: none; border: none; font-size: 20px; color: #999; cursor: pointer;"><i class="fas fa-times"></i></button>
+                <button type="button" onclick="fecharModalDetalhes()" style="background: none; border: none; font-size: 20px; color: #999; cursor: pointer;"><i class="fas fa-times"></i></button>
             </div>
-            
-            <div id="detalhe-cliente" style="margin-bottom: 20px; font-size: 14px; color: #555; background: #f9f9f9; padding: 10px; border-radius: 8px;">
-                <!-- Infos do cliente entram aqui -->
-            </div>
-            
+            <div id="detalhe-cliente" style="margin-bottom: 20px; font-size: 14px; color: #555; background: #f9f9f9; padding: 10px; border-radius: 8px;"></div>
             <h4 style="color: #333; margin-bottom: 10px;"><i class="fas fa-utensils"></i> Itens a Preparar:</h4>
-            <div id="detalhe-itens" style="background: #fdfaee; border: 1px solid #f9ebd4; padding: 15px; border-radius: 8px; margin-bottom: 20px; max-height: 300px; overflow-y: auto;">
-                <!-- Ingredientes entram aqui -->
-            </div>
-            
-            <button class="btn-action" style="width: 100%; padding: 12px; background: var(--green-primary);" onclick="fecharModalDetalhes()">OK, Voltar para a Fila</button>
+            <div id="detalhe-itens" style="background: #fdfaee; border: 1px solid #f9ebd4; padding: 15px; border-radius: 8px; margin-bottom: 20px; max-height: 300px; overflow-y: auto;"></div>
+            <button type="button" class="btn-action" style="width: 100%; padding: 12px; background: var(--green-primary);" onclick="fecharModalDetalhes()">OK, Voltar para a Fila</button>
         </div>
     </div>
 
-<!-- Bibliotecas do Firebase -->
+    <div id="modal-editar-produto" class="modal-overlay modal-oculto">
+        <div class="modal-box" style="max-width: 600px; text-align: left; background: #fff; max-height: 90vh; overflow-y: auto;">
+            <h3 style="color: var(--purple-dark); margin-bottom: 20px; border-bottom: 2px solid var(--bg-light); padding-bottom: 10px;">
+                <i class="fas fa-pen"></i> Editar Produto
+            </h3>
+            
+            <input type="hidden" id="edit-id">
+            
+            <div class="form-grid">
+                <div class="form-group form-full">
+                    <label>Nome do Produto</label>
+                    <input type="text" id="edit-nome">
+                </div>
+                <div class="form-group form-full">
+                    <label>Preço Base (R$)</label>
+                    <input type="number" id="edit-preco" step="0.01">
+                </div>
+
+                <div class="form-group form-full">
+                    <label><i class="fas fa-tint" style="color:var(--purple-light)"></i> Caldas</label>
+                    <div class="input-row">
+                        <input type="text" id="input-edit-calda" placeholder="Ex: Leite Condensado" onkeypress="if(event.key === 'Enter') addEditTag('calda')">
+                        <button type="button" class="btn-small" onclick="addEditTag('calda')"><i class="fas fa-plus"></i></button>
+                    </div>
+                    <div id="tags-edit-calda" class="tags-container"></div>
+                </div>
+
+                <div class="form-group form-full">
+                    <label><i class="fas fa-gift" style="color:var(--purple-light)"></i> Complementos Grátis</label>
+                    <div class="input-row">
+                        <input type="text" id="input-edit-gratis" placeholder="Ex: Leite em Pó" onkeypress="if(event.key === 'Enter') addEditTag('gratis')">
+                        <button type="button" class="btn-small" onclick="addEditTag('gratis')"><i class="fas fa-plus"></i></button>
+                    </div>
+                    <div id="tags-edit-gratis" class="tags-container"></div>
+                </div>
+
+                <div class="form-group form-full">
+                    <label><i class="fas fa-star" style="color:var(--green-primary)"></i> Complementos Extras Pagos</label>
+                    <div class="input-row">
+                        <input type="text" id="input-edit-pago-nome" placeholder="Nome (Ex: Nutella)">
+                        <input type="number" id="input-edit-pago-preco" placeholder="Preço (Ex: 4.00)" step="0.5" style="max-width: 150px;" onkeypress="if(event.key === 'Enter') addEditTagPago()">
+                        <button type="button" class="btn-small" onclick="addEditTagPago()"><i class="fas fa-plus"></i></button>
+                    </div>
+                    <div id="tags-edit-pagos" class="tags-container"></div>
+                </div>
+            </div>
+
+            <div style="display: flex; gap: 10px; margin-top: 25px; justify-content: flex-end;">
+                <button type="button" class="btn btn-danger" style="margin-top: 0; width: auto;" onclick="fecharModalEditar()">Cancelar</button>
+                <button type="button" class="btn-modern" style="width: auto; padding: 12px 20px;" onclick="salvarEdicaoProduto()">
+                    <i class="fas fa-save"></i> Salvar Alterações
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <div id="modal-alerta-admin" class="modal-overlay modal-oculto">
+        <div class="modal-box" style="max-width: 350px; text-align: center;">
+            <div id="modal-alerta-icone" style="font-size: 55px; margin-bottom: 15px;"></div>
+            <h3 id="modal-alerta-titulo" style="color: var(--purple-dark); font-size: 22px; margin-bottom: 10px;">Alerta</h3>
+            <p id="modal-alerta-msg" style="color: #666; font-size: 15px; margin-bottom: 25px; line-height: 1.4;"></p>
+            <button type="button" class="btn" style="background: var(--purple-dark); padding: 12px;" onclick="fecharAlertaAdmin()">Entendido</button>
+        </div>
+    </div>
+
+    <div id="modal-confirm-admin" class="modal-overlay modal-oculto">
+        <div class="modal-box" style="max-width: 350px; text-align: center;">
+            <div style="font-size: 55px; margin-bottom: 15px; color: #ff9800;"><i class="fas fa-exclamation-triangle"></i></div>
+            <h3 id="modal-confirm-titulo" style="color: var(--purple-dark); font-size: 22px; margin-bottom: 10px;">Confirmação</h3>
+            <p id="modal-confirm-msg" style="color: #666; font-size: 15px; margin-bottom: 25px; line-height: 1.4;"></p>
+            <div style="display: flex; gap: 10px;">
+                <button type="button" class="btn btn-danger" style="margin-top:0;" onclick="fecharConfirmAdmin(false)">Cancelar</button>
+                <button type="button" class="btn" style="background: var(--green-primary);" onclick="fecharConfirmAdmin(true)">Confirmar</button>
+            </div>
+        </div>
+    </div>
+
+    <audio id="som-notificacao" src="https://raw.githubusercontent.com/IonDen/ion.sound/master/sounds/door_bell.mp3" preload="auto"></audio>
+    <audio id="som-pix-aprovado" src="https://raw.githubusercontent.com/IonDen/ion.sound/master/sounds/bell_ring.mp3" preload="auto"></audio>
+    <audio id="som-cancelado" src="https://raw.githubusercontent.com/IonDen/ion.sound/master/sounds/bell_ring.mp3" preload="auto"></audio>
+
     <script src="https://www.gstatic.com/firebasejs/10.8.1/firebase-app-compat.js"></script>
-    <script src="https://www.gstatic.com/firebasejs/10.8.1/firebase-auth-compat.js"></script> <!-- ADICIONE ESTA LINHA -->
+    <script src="https://www.gstatic.com/firebasejs/10.8.1/firebase-auth-compat.js"></script> 
     <script src="https://www.gstatic.com/firebasejs/10.8.1/firebase-firestore-compat.js"></script>
     <script src="admin.js"></script>
 

@@ -11,12 +11,12 @@
 <body>
 
     <header class="header">
-        <!-- Canto esquerdo do cabeçalho -->
         <a href="index.html" style="text-decoration: none; color: inherit;">
             <h2>👑 Rei do Açaí</h2>
         </a>
         <div class="nav-area">
-            <button class="nav-btn" onclick="mostrarSecao('inicio')">🏠 Início</button>
+            <button class="nav-btn" onclick="mostrarSecao('inicio')"><i class="fas fa-utensils"></i> Cardápio</button>
+            <button class="nav-btn" onclick="mostrarSecao('meus-pedidos'); carregarMeusPedidos();"><i class="fas fa-receipt"></i> Meus Pedidos</button>
             <button class="nav-btn btn-carrinho" onclick="mostrarSecao('carrinho')">
                 <i class="fas fa-shopping-cart"></i> Carrinho <span id="cart-count">0</span>
             </button>
@@ -24,17 +24,17 @@
     </header>
 
     <main class="main-content">
-        <!-- TELA 1: CATÁLOGO -->
         <section id="inicio" class="view-section active">
             <div class="category-tabs">
                 <button class="tab active" onclick="filtrarCategoria('Copo', this)">Copos</button>
-                <button class="tab" onclick="filtrarCategoria('Barca', this)">Barcas</button>
-                <button class="tab" onclick="filtrarCategoria('Lanche', this)">Lanches</button>
+                <button class="tab" onclick="filtrarCategoria('Tigela', this)">Tigelas</button>
+                <button class="tab" onclick="filtrarCategoria('Bebidas', this)">Bebidas</button>
+                <button class="tab" onclick="filtrarCategoria('Pote de Açaí', this)">Potes de Açaí</button>
+                <button class="tab" style="background-color: #ff9800; color: white;" onclick="filtrarCategoria('Promoção', this)">⭐ Promoções</button>
             </div>
             <div class="product-grid" id="product-list"></div>
         </section>
 
-        <!-- TELA 2: PERSONALIZAÇÃO -->
         <section id="personalizar" class="view-section hidden">
             <button class="nav-btn" style="margin-bottom: 15px; color: var(--purple-dark); border: 1px solid var(--purple-dark); background: transparent;" onclick="mostrarSecao('inicio')">⬅ Voltar ao Cardápio</button>
             <div class="customization-card">
@@ -43,7 +43,6 @@
                 <p id="custom-price" style="font-size: 18px; font-weight: bold; color: var(--green-primary); margin-bottom: 20px;">R$ 0,00</p>
                 <div id="opcoes-dinamicas"></div>
                 
-                <!-- CAIXA DE OBSERVAÇÃO -->
                 <div style="margin-top: 15px;">
                     <h3 style="font-size:15px; margin-bottom:10px; color: var(--purple-dark);">Observações (Opcional)</h3>
                     <textarea id="obs-produto" class="input-modern" placeholder="Ex: Leite em pó só por cima, sem banana..." style="width: 100%; height: 60px; resize: none; padding: 10px;"></textarea>
@@ -53,7 +52,6 @@
             </div>
         </section>
 
-        <!-- TELA 3: CARRINHO E CHECKOUT -->
         <section id="carrinho" class="view-section hidden">
             <div class="checkout-container">
                 <h2 class="section-title"><i class="fas fa-shopping-bag"></i> Seu Pedido</h2>
@@ -111,7 +109,6 @@
                             </label>
                         </div>
 
-                        <!-- CÓDIGO NOVO: SUB-CAIXINHA DE PAGAMENTO NA ENTREGA -->
                         <div id="form-na-entrega-container" style="margin-bottom: 25px; background: #fff; padding: 20px; border-radius: 12px; border: 1px solid #eee;">
                             <p style="margin-bottom: 15px; font-size: 14px; color: #555; font-weight: 600;">Como você vai pagar na entrega?</p>
                             
@@ -154,7 +151,7 @@
                         </div>
                     </div>
 
-                    <div class="cart-total-box">
+                    <div class="cart-total-box" style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px;">
                         <span style="font-size: 16px; color: #555; font-weight: 600;">Total a Pagar</span>
                         <span id="cart-total" style="font-size: 24px; font-weight: 800; color: var(--purple-dark);">R$ 0,00</span>
                     </div>
@@ -164,12 +161,11 @@
             </div>
         </section>
 
-        <!-- TELA 4: PAGAMENTO PIX -->
         <section id="tela-pix" class="view-section hidden" style="text-align: center; padding: 20px;">
             <div style="background: white; padding: 30px; border-radius: 12px; box-shadow: 0 4px 15px rgba(0,0,0,0.1); border-top: 5px solid var(--green-primary); max-width: 500px; margin: 0 auto;">
                 <h2 style="color: var(--green-primary); margin-bottom: 10px;"><i class="fab fa-pix"></i> Pague com PIX</h2>
                 <p style="color: #555; margin-bottom: 20px;">Copie o código abaixo e cole no aplicativo do seu banco para finalizar a compra.</p>
-                <textarea id="input-pix" readonly style="width: 100%; height: 80px; padding: 15px; border: 2px dashed #ccc; border-radius: 8px; font-size: 14px; margin-bottom: 15px; background: #f9f9f9; resize: none;"></textarea>
+                <textarea id="input-pix" readonly style="width: 100%; height: 80px; padding: 15px; border: 2px dashed #ccc; border-radius: 8px; font-size: 14px; margin-bottom: 15px; background: #f9f9f9; resize: none; text-align: center;"></textarea>
                 <button class="btn-action" onclick="copiarPix()" style="width: 100%; padding: 15px; font-size: 16px; margin-bottom: 20px; background: var(--green-primary);">
                     <i class="fas fa-copy"></i> Copiar Código PIX
                 </button>
@@ -177,14 +173,43 @@
                     ⏳ O código expira em: <span id="pix-timer" style="font-size: 20px; display: block; margin-top: 5px;">10:00</span>
                 </div>
                 
-                <button class="btn-action" onclick="aprovarPixTeste()" style="width: 100%; padding: 15px; font-size: 16px; margin-bottom: 10px; background: var(--purple-dark);">
-                    ✅ Simular Pagamento Aprovado
-                </button>
-                <button class="nav-btn" style="color: var(--purple-dark); border: 1px solid var(--purple-dark); background: transparent; width: 100%;" onclick="window.location.reload()">⬅ Cancelar Pedido</button>
+                <button class="nav-btn" style="color: var(--purple-dark); border: 1px solid var(--purple-dark); background: transparent; width: 100%;" onclick="cancelarPedidoPix()">⬅ Cancelar Pedido</button>
             </div>
         </section>
 
-        <!-- MODAL DE ALERTAS -->
+        <section id="sucesso" class="view-section hidden" style="text-align: center; padding: 20px;">
+            <div style="background: white; width: 100%; max-width: 400px; border-radius: 16px; padding: 40px 30px; margin: 0 auto; text-align: center; position: relative; box-shadow: 0 4px 15px rgba(0,0,0,0.1); border-top: 5px solid var(--purple-dark);">
+                <i class="fas fa-check-circle" style="font-size: 70px; color: var(--green-primary); margin-bottom: 15px;"></i>
+                
+                <h2 style="color: var(--purple-dark); font-size: 26px; margin: 0 0 5px 0;">Tudo Certo!</h2>
+                <p style="color: #666; font-size: 15px; margin: 0 0 20px 0;">Seu pedido já está com a nossa equipe.</p>
+                
+                <div style="background: #f4f5f7; border-radius: 12px; padding: 15px; margin-bottom: 25px;">
+                    <p style="margin: 0; color: #555; font-size: 14px;">PEDIDO Nº</p>
+                    <p id="sucesso-id-pedido" style="color: var(--purple-dark); font-weight: 900; font-size: 28px; margin: 5px 0;">#0000</p>
+                </div>
+
+                <div style="text-align: left; margin-bottom: 25px; display: flex; flex-direction: column; gap: 10px;">
+                    <div style="display: flex; justify-content: space-between; align-items: center;">
+                        <span style="color: #666; font-size: 15px;"><i class="fas fa-info-circle"></i> Status:</span>
+                        <span style="background: #fff3cd; color: #856404; padding: 4px 10px; border-radius: 12px; font-size: 12px; font-weight: bold;">Na Cozinha</span>
+                    </div>
+                </div>
+
+                <button onclick="mostrarSecao('inicio')" class="btn-action" style="width: 100%; padding: 16px; font-size: 16px;">Fazer Novo Pedido</button>
+            </div>
+        </section>
+
+        <section id="meus-pedidos" class="view-section hidden" style="padding: 20px; max-width: 600px; margin: 0 auto;">
+            <h2 class="section-title" style="text-align: center;"><i class="fas fa-history"></i> Histórico de Pedidos</h2>
+            
+            <div id="lista-meus-pedidos" style="display: flex; flex-direction: column; gap: 15px;"></div>
+            
+            <button onclick="mostrarSecao('inicio')" class="nav-btn" style="width: 100%; margin-top: 30px; color: var(--purple-dark); border: 1px solid var(--purple-dark); background: transparent;">
+                ⬅ Voltar ao Cardápio
+            </button>
+        </section>
+
         <div id="modal-alerta" class="modal-overlay modal-oculto">
             <div class="modal-box">
                 <div id="modal-icon" class="modal-icon"></div>
@@ -196,7 +221,6 @@
 
     </main>
 
-    <!-- Bibliotecas do Firebase -->
     <script src="https://www.gstatic.com/firebasejs/10.8.1/firebase-app-compat.js"></script>
     <script src="https://www.gstatic.com/firebasejs/10.8.1/firebase-firestore-compat.js"></script>
     <script src="cardapio.js"></script>
